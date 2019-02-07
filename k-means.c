@@ -59,15 +59,12 @@ int main()
     printf("Input the amount of clusters: ");
     scanf("%d", &clusterNum);
 
-    struct clusterData
-    {
-        int pointNum;
-        int *points;
-        double clusterSum[dimentions];
-    };
-
     // Creating Centroid array
-    double centroids[clusterNum][dimentions];
+    double **centroids;
+    centroids = calloc(clusterNum,sizeof(double));
+    for (i=0; i<clusterNum; i++)
+        centroids = calloc(dimentions,sizeof(double));
+
 
     // Generating initial Centroids
     for (i = 0; i < clusterNum; i++)
@@ -80,24 +77,31 @@ int main()
     // Initialising cluster arrays thats wrong
     // int clusters[clusterNum][elementCounter];
 
-    // Testing ne technique
-    struct clusterData clusters[clusterNum];
+    // Testing new technique doesnt work
+    int *clusterSize;
+    int **clusterSum;
+    int **clusters;
 
     int changed[clusterNum];                    // If changes are commited it will resume execution
     double exCentroids[clusterNum][dimentions]; // Var for locating changes in centroids
 
     do
     {
-        // Reinitialising cluster arrays thats wrong
+        int biggestCluster = 0;
+
+        //Initialising clusters
+        clusters = calloc(clusterNum,sizeof(int));
+
         // int clusters[clusterNum][elementCounter];
-        struct clusterData clusters[clusterNum];
+        clusterSize = calloc(clusterNum,sizeof(int));
+
+        //Storing current cluster size
+        clusterSum = calloc(clusterNum,sizeof(double));
 
         for (i = 0; i < clusterNum; i++)
         {
-            clusters[i].pointNum = 0;
             changed[i] = 1;
-            for (j = 0; j < dimentions; j++)
-                clusters[i].clusterSum[j] = 0;
+            clusterSum[j] = calloc(dimentions,sizeof(double));
         }
 
         // asigning items to Centroids
@@ -121,17 +125,23 @@ int main()
             }
 
             // Possible error creating space for element then storing it
-            clusters[minCluster].points = malloc(sizeof(int)); //dont forget realloc
-            clusters[minCluster].points[clusters[minCluster].pointNum] = i;
-            for (d = 0; d < dimentions; d++)
-                clusters[minCluster].clusterSum[d] += elements[clusters[minCluster].pointNum][d];
-            clusters[minCluster].pointNum++;
+            clusterSize ++;
+            if (clusterSize[minCluster] > biggestCluster)
+                for (i=0; i<clusterNum; i++) {
+                    clusters[i] = calloc(1,sizeof(int));
+                    biggestCluster ++;
+                }
+            clusters[minCluster][ clusterSize[minCluster] ] = i;
+    
+            for (d = 0; d < dimentions; d++) {
+                clusterSum[minCluster][d] += elements[ clusters[minCluster][clusterSize[minCluster]] ][d];
+            }
         }
         // Calculating new centroid
         for (i = 0; i < clusterNum; i++)
             for (j = 0; j < dimentions; j++)
             {
-                centroids[i][j] = clusters[i].clusterSum[j] / clusters[i].pointNum;
+                centroids[i][j] = clusterSum[i][j] / clusterSize[i];
                 if (centroids[i][j] == exCentroids[i][j])
                     changed[i] = 0;
                 exCentroids[i][j] = centroids[i][j];
@@ -158,10 +168,10 @@ int main()
     {
         sprintf(fileName, "Cluster%d.csv", i);
         f = fopen(fileName, "w");
-        for (j = 0; j < clusters[i].pointNum; j++)
+        for (j = 0; j < clusterSize[i]; j++)
         {
             for (d = 0; d < dimentions; d++)
-                fprintf(f, "%lf ", elements[clusters[i].points[j]][d]);
+                fprintf(f, "%lf ", elements[clusterSize[i]][d]);
             fprintf(f, "\n");
         }
         fclose(f);
