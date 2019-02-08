@@ -22,7 +22,7 @@ int main()
     printf("Insert Data file: ");
     scanf("%s", fileName);
     f = fopen(fileName, "r");
-    if (!f)
+    if (!f) 
     {
         printf("Invalid file\n");
         return 0;
