@@ -8,14 +8,15 @@ int main()
     char fileName[100];       // The name is pretty accurate
     char tempChar;            // Buffer... stores a character temporarily
     double tempDouble;        // Buffer for doubles
-    int dimentions = 1;       // Dimention counter for the file
+    int dimentions = 0;       // Dimention counter for the file
     int elementCounter = 0;   // Element counter for the file
     int clusterNum;           // Stores the cluster num
     double minDistance;       // This is utilised in the element assignment to clusters
     int minCluster;           // Closest cluster at the moment
+    int biggestCluster = 0;   // Cluster containing the most data points, used for memory alocation
     int changesCommited;      // This will be used as a flag to end the algorythm when changes no longer happen
     int iterationCounter = 0; // This counts iterations
-    int dbg = 0;              // Debug variable should be deleted printf("Debug %d",dbg++);
+    int dbg = 0;              // Debug variable should be deleted printf("Debug %d\n",dbg++);
 
     // diagnosing file counting inputs
     FILE *f;
@@ -43,7 +44,7 @@ int main()
     elementCounter++;
     rewind(f);
     printf("Detected \n Elements : %d\n Dimentions : %d\n", elementCounter, dimentions);
-
+    
     // Array for elements first dim shows id second dimentions
     double **elements;
     elements = calloc(elementCounter,sizeof(double));
@@ -58,13 +59,12 @@ int main()
     // Requesting number of clusters this will need to change
     printf("Input the amount of clusters: ");
     scanf("%d", &clusterNum);
-
+    
     // Creating Centroid array
     double **centroids;
     centroids = calloc(clusterNum,sizeof(double));
     for (i=0; i<clusterNum; i++)
-        centroids = calloc(dimentions,sizeof(double));
-
+        centroids[i] = calloc(dimentions,sizeof(double));
 
     // Generating initial Centroids
     for (i = 0; i < clusterNum; i++)
@@ -87,24 +87,25 @@ int main()
 
     do
     {
-        int biggestCluster = 0;
+        // Reseting counter
+        biggestCluster = 0;
 
-        //Initialising clusters
+        // Initialising clusters
         clusters = calloc(clusterNum,sizeof(int));
 
         // int clusters[clusterNum][elementCounter];
         clusterSize = calloc(clusterNum,sizeof(int));
 
-        //Storing current cluster size
+        // Storing current cluster size
         clusterSum = calloc(clusterNum,sizeof(double));
 
         for (i = 0; i < clusterNum; i++)
         {
             changed[i] = 1;
-            clusterSum[j] = calloc(dimentions,sizeof(double));
+            clusterSum[i] = calloc(dimentions,sizeof(double));
         }
 
-        // asigning items to Centroids
+        // Asigning items to Centroids
         for (i = 0; i < elementCounter; i++)
         {
             minDistance = 99999999; //change that
@@ -125,18 +126,20 @@ int main()
             }
 
             // Possible error creating space for element then storing it
-            clusterSize ++;
+            clusterSize[minCluster] ++;
             if (clusterSize[minCluster] > biggestCluster)
-                for (i=0; i<clusterNum; i++) {
-                    clusters[i] = calloc(1,sizeof(int));
+                for (j=0; j<clusterNum; j++) {
+                    clusters[j] = calloc(1,sizeof(int));
                     biggestCluster ++;
                 }
             clusters[minCluster][ clusterSize[minCluster] ] = i;
-    
+
             for (d = 0; d < dimentions; d++) {
                 clusterSum[minCluster][d] += elements[ clusters[minCluster][clusterSize[minCluster]] ][d];
             }
+            
         }
+
         // Calculating new centroid
         for (i = 0; i < clusterNum; i++)
             for (j = 0; j < dimentions; j++)
@@ -146,6 +149,7 @@ int main()
                     changed[i] = 0;
                 exCentroids[i][j] = centroids[i][j];
             }
+        
         // tempDouble = tempDouble/(clusterPoints[i]/dimentions);
 
         iterationCounter++;
@@ -171,8 +175,8 @@ int main()
         for (j = 0; j < clusterSize[i]; j++)
         {
             for (d = 0; d < dimentions; d++)
-                fprintf(f, "%lf ", elements[clusterSize[i]][d]);
-            fprintf(f, "\n");
+                fprintf(f, "%lf ", elements[j][d]);
+            fprintf(f, " \n");
         }
         fclose(f);
     }
