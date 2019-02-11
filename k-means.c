@@ -8,7 +8,7 @@ int main()
     char fileName[100];       // The name is pretty accurate
     char tempChar;            // Buffer... stores a character temporarily
     double tempDouble;        // Buffer for doubles
-    int dimentions = 0;       // Dimention counter for the file
+    int dimentions = 1;       // Dimention counter for the file
     int elementCounter = 0;   // Element counter for the file
     int clusterNum;           // Stores the cluster num
     double minDistance;       // This is utilised in the element assignment to clusters
@@ -16,6 +16,7 @@ int main()
     int biggestCluster = 0;   // Cluster containing the most data points, used for memory alocation
     int changesCommited;      // This will be used as a flag to end the algorythm when changes no longer happen
     int iterationCounter = 0; // This counts iterations
+    int changesCounter = 0;   // This is used to determine when to terminate the program
     int dbg = 0;              // Debug variable should be deleted printf("Debug %d\n",dbg++);
 
     // diagnosing file counting inputs
@@ -69,41 +70,33 @@ int main()
     // Generating initial Centroids
     for (i = 0; i < clusterNum; i++)
         for (j = 0; j < dimentions; j++)
-        {
             centroids[i][j] = elements[rand() % elementCounter][j];
             // The line above may not correspond with k-means philoshophy
-        }
 
-    // Initialising cluster arrays thats wrong
-    // int clusters[clusterNum][elementCounter];
-
-    // Testing new technique doesnt work
     int *clusterSize;
     int **clusterSum;
     int **clusters;
 
+    int **exClusters;
+    exClusters = calloc(clusterNum,sizeof(int));
+
     int changed[clusterNum];                    // If changes are commited it will resume execution
-    double exCentroids[clusterNum][dimentions]; // Var for locating changes in centroids
 
     do
     {
-        // Reseting counter
+        // Reseting counters
         biggestCluster = 0;
-
+        changesCommited = 1;
         // Initialising clusters
         clusters = calloc(clusterNum,sizeof(int));
 
-        // int clusters[clusterNum][elementCounter];
+        // Reseting cluster sizes
         clusterSize = calloc(clusterNum,sizeof(int));
 
-        // Storing current cluster size
+        // Storing current cluster sums per dimention
         clusterSum = calloc(clusterNum,sizeof(double));
-
         for (i = 0; i < clusterNum; i++)
-        {
-            changed[i] = 1;
             clusterSum[i] = calloc(dimentions,sizeof(double));
-        }
 
         // Asigning items to Centroids
         for (i = 0; i < elementCounter; i++)
@@ -115,23 +108,27 @@ int main()
                 // avg of dimention values may be wrong
                 tempDouble = 0;
                 for (d = 0; d < dimentions; d++)
-                    tempDouble += abs(centroids[j][d] - elements[i][d]);
+                    tempDouble += (centroids[j][d] - elements[i][d])*(centroids[j][d] - elements[i][d]);
+
+                tempDouble = sqrt(tempDouble);
 
                 // finding the closest centroid
-                if ((tempDouble / dimentions) <= minDistance)
+                printf("minvalue %lf for cluster %d \n",tempDouble,j);
+                if (tempDouble <= minDistance)
                 {
-                    minDistance = (tempDouble / dimentions);
+                    minDistance = tempDouble;
                     minCluster = j;
                 }
             }
-
-            // Possible error creating space for element then storing it
+            printf("selected cluster %d \n",minCluster);
+            // Storing element in cluster
             clusterSize[minCluster] ++;
             if (clusterSize[minCluster] > biggestCluster)
                 for (j=0; j<clusterNum; j++) {
                     clusters[j] = calloc(1,sizeof(int));
                     biggestCluster ++;
                 }
+            printf("i is %d\n",i);
             clusters[minCluster][ clusterSize[minCluster] ] = i;
 
             for (d = 0; d < dimentions; d++) {
@@ -143,24 +140,29 @@ int main()
         // Calculating new centroid
         for (i = 0; i < clusterNum; i++)
             for (j = 0; j < dimentions; j++)
-            {
                 centroids[i][j] = clusterSum[i][j] / clusterSize[i];
-                if (centroids[i][j] == exCentroids[i][j])
-                    changed[i] = 0;
-                exCentroids[i][j] = centroids[i][j];
-            }
-        
-        // tempDouble = tempDouble/(clusterPoints[i]/dimentions);
 
         iterationCounter++;
 
         // Find if it should terminate
-        changesCommited = 0;
-        for (i = 0; i < clusterNum; i++)
-            if (changed[i] != 0)
-                changesCommited = 1;
+        // Termination is wrong system needs to terminate when less than 2% of points change
+        if (iterationCounter == 1)
+            for(i=0; i<clusterNum; i++)
+                exClusters[i] = calloc(biggestCluster,sizeof(int));
 
-        // It runs twice for the first element
+        printf("biggest cluster %d\n",biggestCluster);
+
+        for (i=0; i<clusterNum; i++)
+            for (j=0; j<clusterSize[i]; j++) {
+                if (exClusters[i][j] != clusters[i][j])
+                    changesCounter ++;
+                exClusters[i][j] = clusters[i][j];
+                printf("exClusters %d\n",clusters[i][j]);
+            }
+        printf("Changes %d\n",changesCounter);
+        
+        if (changesCounter < elementCounter) //This is why it doesnt stop
+            changesCommited = 0;
 
     } while (changesCommited == 1);
 
