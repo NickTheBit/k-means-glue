@@ -161,7 +161,7 @@ int main()
             }
         printf("Changes %d\n",changesCounter);
         
-        if (changesCounter < elementCounter) //This is why it doesnt stop
+        if (changesCounter < elementCounter) //This is why it doesn't stop
             changesCommited = 0;
 
     } while (changesCommited == 1);
