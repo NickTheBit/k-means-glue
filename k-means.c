@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
-int main()
+int main(int argc,char **argv)
 {
     int i, j, d;              // Counters for numerus purposes
     char fileName[100];       // The name is pretty accurate
@@ -21,16 +22,25 @@ int main()
 
     // diagnosing file counting inputs
     FILE *f;
-    printf("Insert Data file: ");
-    scanf("%s", fileName);
-    f = fopen(fileName, "r");
-    if (!f) 
-    {
+    if (argc == 3) {
+        // Getting data from main()
+        f = fopen(argv[1],"r");
+        clusterNum = atoi(argv[2]);
+    } else {
+        // Getting data from user
+        printf("Insert Data file: ");
+        scanf("%s", fileName);
+        f = fopen(fileName, "r");
+        printf("Input the amount of clusters: ");
+        scanf("%d", &clusterNum);
+    }
+
+    // Reading file
+    if (!f) {
         printf("Invalid file\n");
         return 0;
     }
-    do
-    {
+    do {
         fscanf(f, "%c", &tempChar);
         if (tempChar == ' ')
             dimentions++;
@@ -57,9 +67,6 @@ int main()
         for (j = 0; j < dimentions; j++)
             fscanf(f, "%lf", &elements[i][j]);
 
-    // Requesting number of clusters this will need to change
-    printf("Input the amount of clusters: ");
-    scanf("%d", &clusterNum);
     
     // Creating Centroid array
     double **centroids;
@@ -87,7 +94,9 @@ int main()
         // Reseting counters
         biggestCluster = 0;
         changesCommited = 1;
+
         // Initialising clusters
+        printf("Debug %d\n",dbg++);
         clusters = calloc(clusterNum,sizeof(int));
 
         // Reseting cluster sizes
@@ -105,7 +114,7 @@ int main()
             minCluster = 0;
             for (j = 0; j < clusterNum; j++)
             {
-                // avg of dimention values may be wrong
+                // Tracking the closest centroid
                 tempDouble = 0;
                 for (d = 0; d < dimentions; d++)
                     tempDouble += (centroids[j][d] - elements[i][d])*(centroids[j][d] - elements[i][d]);
@@ -113,14 +122,12 @@ int main()
                 tempDouble = sqrt(tempDouble);
 
                 // finding the closest centroid
-                printf("minvalue %lf for cluster %d \n",tempDouble,j);
                 if (tempDouble <= minDistance)
                 {
                     minDistance = tempDouble;
                     minCluster = j;
                 }
             }
-            printf("selected cluster %d \n",minCluster);
             // Storing element in cluster
             clusterSize[minCluster] ++;
             if (clusterSize[minCluster] > biggestCluster)
@@ -128,7 +135,6 @@ int main()
                     clusters[j] = calloc(1,sizeof(int));
                     biggestCluster ++;
                 }
-            printf("i is %d\n",i);
             clusters[minCluster][ clusterSize[minCluster] ] = i;
 
             for (d = 0; d < dimentions; d++) {
@@ -140,9 +146,12 @@ int main()
         // Calculating new centroid
         for (i = 0; i < clusterNum; i++)
             for (j = 0; j < dimentions; j++)
-                centroids[i][j] = clusterSum[i][j] / clusterSize[i];
-
+                centroids[i][j] = clusterSum[i][j] / (clusterSize[i]);
+        printf("New Centroid is : %lf %lf %lf \n",centroids[0][0],centroids[0][1],centroids[0][2]);
+        printf("New Centroid is : %lf %lf %lf \n",centroids[1][0],centroids[1][1],centroids[1][2]);
+        
         iterationCounter++;
+        printf("Iteration counter %d \n",iterationCounter);
 
         // Find if it should terminate
         // Termination is wrong system needs to terminate when less than 2% of points change
@@ -150,22 +159,27 @@ int main()
             for(i=0; i<clusterNum; i++)
                 exClusters[i] = calloc(biggestCluster,sizeof(int));
 
-        printf("biggest cluster %d\n",biggestCluster);
-
         for (i=0; i<clusterNum; i++)
             for (j=0; j<clusterSize[i]; j++) {
                 if (exClusters[i][j] != clusters[i][j])
                     changesCounter ++;
                 exClusters[i][j] = clusters[i][j];
-                printf("exClusters %d\n",clusters[i][j]);
             }
         printf("Changes %d\n",changesCounter);
         
-        if (changesCounter < elementCounter) //This is why it doesn't stop
+        // if (changesCounter < elementCounter) //This is why it doesn't stop
+        if (iterationCounter >= 50) {
             changesCommited = 0;
-
+        } else {
+            // In case it needs to be run again those need to reset
+            free(clusterSize);
+            free(clusterSum);
+            free(clusters);
+            printf("cleaning complete\n");
+        }
     } while (changesCommited == 1);
 
+    
     fclose(f);
 
     printf("iterations : %d\n", iterationCounter);
@@ -182,6 +196,5 @@ int main()
         }
         fclose(f);
     }
-
     return 0;
 }
