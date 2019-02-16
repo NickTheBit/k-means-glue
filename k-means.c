@@ -109,7 +109,6 @@ int main(int argc,char **argv)
         for (i = 0; i < elementCounter; i++)
         {
             minDistance = 99999999; //change that... or not, its the biggest possible number...
-            minCluster = 0;
             for (j = 0; j < clusterNum; j++)
             {
                 // Tracking the closest centroid
@@ -125,6 +124,7 @@ int main(int argc,char **argv)
                     minCluster = j;
                 }
             }
+            printf("MinCluster of %d is %d iteration %d\n",i,minCluster,iterationCounter);
             // Storing element in cluster
             clusterSize[minCluster] ++;
             if (clusterSize[minCluster] > biggestCluster)
