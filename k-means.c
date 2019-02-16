@@ -85,8 +85,6 @@ int main(int argc,char **argv)
             centroids[i][j] = elements[rand() % elementCounter][j];
             // The line above may not correspond with k-means philoshophy
         }
-        printf("%lf %lf %lf\n",centroids[0][0],centroids[0][1],centroids[0][2]);
-        printf("%lf %lf %lf\n",centroids[1][0],centroids[1][1],centroids[1][2]);
 
     int *clusterSize;
     clusterSize = calloc(clusterNum,sizeof(int));
@@ -124,8 +122,7 @@ int main(int argc,char **argv)
                     minCluster = j;
                 }
             }
-            printf("MinCluster of %d is %d iteration %d\n",i,minCluster,iterationCounter);
-            // Storing element in cluster
+            // Storing element in cluster PROBLEMA
             clusterSize[minCluster] ++;
             if (clusterSize[minCluster] > biggestCluster)
                 for (j=0; j<clusterNum; j++) {
