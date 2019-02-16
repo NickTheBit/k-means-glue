@@ -18,7 +18,6 @@ int main(int argc,char **argv)
     int changesCommited;      // This will be used as a flag to end the algorythm when changes no longer happen
     int iterationCounter = 0; // This counts iterations
     int ready[clusterNum];    // Ceeps record of centroid changes for termination
-    int dbg = 0;              // Debug variable should be deleted printf("Debug %d\n",dbg++);
 
     // diagnosing file counting inputs
     FILE *f;
@@ -81,10 +80,9 @@ int main(int argc,char **argv)
 
     // Generating initial Centroids
     for (i = 0; i < clusterNum; i++)
-        for (j = 0; j < dimentions; j++) {
+        for (j = 0; j < dimentions; j++)
             centroids[i][j] = elements[rand() % elementCounter][j];
             // The line above may not correspond with k-means philoshophy
-        }
 
     int *clusterSize;
     clusterSize = calloc(clusterNum,sizeof(int));
@@ -175,7 +173,7 @@ int main(int argc,char **argv)
     {
         sprintf(fileName, "Cluster%d.csv", i);
         f = fopen(fileName, "w");
-        for (j = 0; j < clusterSize[i]; j++)
+        for (j = 1; j <= clusterSize[i]; j++)
         {
             for (d = 0; d < dimentions; d++)
                 fprintf(f, "%lf ", elements[clusters[i][j]][d]);
