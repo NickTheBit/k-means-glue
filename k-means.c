@@ -17,7 +17,7 @@ int main(int argc,char **argv)
     int biggestCluster = 0;   // Cluster containing the most data points, used for memory alocation
     int changesCommited;      // This will be used as a flag to end the algorythm when changes no longer happen
     int iterationCounter = 0; // This counts iterations
-    int ready[clusterNum];    // Ceeps record of centroid changes for termination
+    int dbg = 0;              // Debugging var printf("Debug %d\n",dbg++);
 
     // diagnosing file counting inputs
     FILE *f;
@@ -41,7 +41,7 @@ int main(int argc,char **argv)
     }
     do {
         fscanf(f, "%c", &tempChar);
-        if (tempChar == ' ')
+        if ((tempChar == ' ')||(tempChar == ','))
             dimentions++;
     } while (tempChar != '\n');
     rewind(f);
@@ -51,13 +51,13 @@ int main(int argc,char **argv)
         if (tempChar == '\n')
             elementCounter++;
     }
-    elementCounter++;
     rewind(f);
     printf("Detected \n Elements : %d\n Dimentions : %d\n", elementCounter, dimentions);
+
+    int ready[clusterNum];    // Ceeps record of centroid changes for termination
     
     // Array for elements first dim shows id second dimentions
-    double **elements;
-    elements = calloc(elementCounter,sizeof(double));
+    double **elements = calloc(elementCounter,sizeof(double));
     for (i=0; i<elementCounter; i++)
         elements[i] = calloc(dimentions,sizeof(double));
 
@@ -67,11 +67,8 @@ int main(int argc,char **argv)
             fscanf(f, "%lf", &elements[i][j]);
 
     // Creating Centroid array and secondary array for termination check
-    double **centroids;
-    double **exCentroids;
-
-    centroids = calloc(clusterNum,sizeof(double));
-    exCentroids = calloc(clusterNum, sizeof(double));
+    double **centroids = malloc(clusterNum * sizeof(double*));
+    double **exCentroids = malloc(clusterNum * sizeof(double*));
 
     for (i=0; i<clusterNum; i++) {
         centroids[i] = calloc(dimentions,sizeof(double));
@@ -87,17 +84,20 @@ int main(int argc,char **argv)
     int *clusterSize;
     clusterSize = calloc(clusterNum,sizeof(int));
     
-    int **clusterSum;
-    clusterSum = calloc(clusterNum,sizeof(double));
+    double **clusterSum = malloc(clusterNum*sizeof(double *));
     for (i = 0; i < clusterNum; i++)
         clusterSum[i] = calloc(dimentions,sizeof(double));
 
-    int **clusters;
-    clusters = calloc(clusterNum,sizeof(int));
+    int **clusters = (int **)malloc(clusterNum * sizeof(int *));
+
+    // Array for temporary storage of corresponding clusters
+    int *clustertemp = malloc(elementCounter*sizeof(int));
+
+    int *assignCounter = calloc(clusterNum,sizeof(int));
 
     // Starting loop for iterations
     do {
-
+        biggestCluster = 0;
         for (i=0; i<clusterNum; i++)
             ready[i] = 0;
 
@@ -112,7 +112,7 @@ int main(int argc,char **argv)
                 for (d = 0; d < dimentions; d++)
                     tempDouble += (centroids[j][d] - elements[i][d])*(centroids[j][d] - elements[i][d]);
 
-                tempDouble = sqrt(tempDouble);
+                tempDouble = sqrt(tempDouble/dimentions);
                 // finding the closest centroid
                 if (tempDouble <= minDistance)
                 {
@@ -120,22 +120,26 @@ int main(int argc,char **argv)
                     minCluster = j;
                 }
             }
-            // Storing element in cluster PROBLEMA
-            clusterSize[minCluster] ++;
-            if (clusterSize[minCluster] > biggestCluster)
-                for (j=0; j<clusterNum; j++) {
-                    clusters[j] = calloc(1,sizeof(int));
-                    biggestCluster ++;
-                }
-            clusters[minCluster][ clusterSize[minCluster] ] = i;
+            // Storing element in cluster first slot always empty
+            clusterSize[minCluster] += 1;
+            clustertemp[i] = minCluster;        
+        
             for (d = 0; d < dimentions; d++)
-                clusterSum[minCluster][d] += elements[ clusters[minCluster][clusterSize[minCluster]] ][d];
+                clusterSum[minCluster][d] += elements[i][d];
+        }
+        // Allocating space for clusters
+        for (i=0; i<clusterNum; i++)
+            clusters[i] = (int *)malloc(clusterSize[i]* sizeof(int));
+
+        for (i=0; i<elementCounter; i++) {
+            d = clustertemp[i];
+            clusters[d][assignCounter[d]++] = i;
         }
         // Calculating new centroid
         for (i = 0; i < clusterNum; i++)
             for (j = 0; j < dimentions; j++)
                 centroids[i][j] = clusterSum[i][j] / (clusterSize[i]);
-
+        
         iterationCounter++;
 
         // Find if it should terminate
@@ -158,11 +162,13 @@ int main(int argc,char **argv)
         // In case it needs to be run again those need to reset
         if (changesCommited == 1) {
             for (i=0; i<clusterNum; i++) {
-                memset(clusters[i], 0,dimentions*sizeof(int));
-                memset(clusterSum[i], 0,dimentions*sizeof(double));
+                free(clusters[i]);
+                clusterSize[i] = 0;
+                for (j=0; j<dimentions; j++)
+                    clusterSum[i][j] = 0;
+                printf("Debug %d i:%d\n",dbg++,i);
             }
             // Reseting cluster sizes
-            memset(clusterSize, 0,clusterNum*sizeof(int));
         }
     } while (changesCommited == 1);
 
@@ -173,6 +179,7 @@ int main(int argc,char **argv)
     {
         sprintf(fileName, "Cluster%d.csv", i);
         f = fopen(fileName, "w");
+        printf("Debug %d\n",dbg++);
         for (j = 1; j <= clusterSize[i]; j++)
         {
             for (d = 0; d < dimentions; d++)
