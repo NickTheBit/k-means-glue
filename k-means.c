@@ -10,11 +10,10 @@ int main(int argc,char **argv)
     char tempChar;            // Buffer... stores a character temporarily
     double tempDouble;        // Buffer for doubles
     int dimentions = 1;       // Dimention counter for the file
-    int elementCounter = 0;   // Element counter for the file
+    int elementCounter = 1;   // Element counter for the file
     int clusterNum;           // Stores the cluster num
     double minDistance;       // This is utilised in the element assignment to clusters
     int minCluster;           // Closest cluster at the current centroid
-    int biggestCluster = 0;   // Cluster containing the most data points, used for memory alocation
     int changesCommited;      // This will be used as a flag to end the algorythm when changes no longer happen
     int iterationCounter = 0; // This counts iterations
     int dbg = 0;              // Debugging var printf("Debug %d\n",dbg++);
@@ -97,7 +96,6 @@ int main(int argc,char **argv)
 
     // Starting loop for iterations
     do {
-        biggestCluster = 0;
         for (i=0; i<clusterNum; i++)
             ready[i] = 0;
 
@@ -164,6 +162,7 @@ int main(int argc,char **argv)
             for (i=0; i<clusterNum; i++) {
                 free(clusters[i]);
                 clusterSize[i] = 0;
+                assignCounter[i] = 0;
                 for (j=0; j<dimentions; j++)
                     clusterSum[i][j] = 0;
                 printf("Debug %d i:%d\n",dbg++,i);
@@ -180,7 +179,7 @@ int main(int argc,char **argv)
         sprintf(fileName, "Cluster%d.csv", i);
         f = fopen(fileName, "w");
         printf("Debug %d\n",dbg++);
-        for (j = 1; j <= clusterSize[i]; j++)
+        for (j = 0; j < clusterSize[i]; j++)
         {
             for (d = 0; d < dimentions; d++)
                 fprintf(f, "%lf ", elements[clusters[i][j]][d]);
